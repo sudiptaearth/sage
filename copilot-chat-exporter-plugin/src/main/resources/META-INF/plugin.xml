@@ -1,0 +1,29 @@
+<idea-plugin>
+    <id>com.copilotexport.chat-exporter</id>
+    <name>Copilot Chat Exporter</name>
+    <vendor email="support@example.com" url="https://github.com">Copilot Chat Exporter</vendor>
+    <description>Export GitHub Copilot chat sessions to Markdown format</description>
+    <version>0.1.0</version>
+    <idea-version since-build="242.0" until-build="999.*"/>
+    
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.copilotexport.plugin.ExportSettingsState"/>
+        <applicationConfigurable
+                instance="com.copilotexport.plugin.ExportSettingsConfigurable"
+                displayName="Copilot Chat Exporter"
+                id="com.copilotexport.settings"/>
+    </extensions>
+
+    <actions>
+        <action
+                id="com.copilotexport.ExportCopilotChatAction"
+                class="com.copilotexport.plugin.ExportCopilotChatAction"
+                text="Export Copilot Chat to Markdown"
+                description="Export the current Copilot chat session to a Markdown file">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
