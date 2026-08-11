@@ -1,10 +1,10 @@
 <idea-plugin>
     <id>com.sage.plugin</id>
-    <name>Sage</name>
-    <vendor email="support@example.com" url="https://github.com">Sage</vendor>
+    <name>Sage for Copilot Chat</name>
+    <vendor email="sudipta.earth@gmail.com" url="https://github.com/sudiptaearth/sage">Sage</vendor>
     <description>Analyse GitHub Copilot chat sessions for mistakes and update instructions files; also export sessions to Markdown format</description>
-    <version>0.1.0</version>
-    <idea-version since-build="242.0" until-build="999.*"/>
+    <version>0.1.1</version>
+    <idea-version since-build="242.0"/>
     
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>

@@ -51,7 +51,19 @@ tasks.test {
     useJUnitPlatform()
 }
 
-// Override patchPluginXml to prevent it from restricting until-build
+// Remove until-build restriction entirely so the plugin is compatible with all future IDE versions
 tasks.patchPluginXml {
-    untilBuild.set("999.*")
+    untilBuild.set("")
+}
+
+// Signing (optional - only runs if certificate env vars are set)
+tasks.signPlugin {
+    certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
+    privateKey.set(System.getenv("PRIVATE_KEY"))
+    password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
+}
+
+// Publishing - requires PUBLISH_TOKEN env var set locally, never hardcode the token here
+tasks.publishPlugin {
+    token.set(System.getenv("PUBLISH_TOKEN"))
 }
