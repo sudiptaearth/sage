@@ -3,6 +3,7 @@ package com.sage.plugin
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
@@ -12,6 +13,7 @@ import java.awt.GridLayout
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -25,12 +27,21 @@ internal class LearningOptionsDialog(
     defaultProjectScope: Boolean,
     defaultGlobalScope: Boolean,
     defaultModel: String,
+    defaultMode: String = "conservative",
     private val repoRoot: Path? = null
 ) : DialogWrapper(true) {
 
     private val projectCheckBox = JBCheckBox("Project (.github/copilot-instructions.md)", defaultProjectScope && hasProject)
     private val globalCheckBox = JBCheckBox("Global (~/.copilot/instructions/learnings.instructions.md)", defaultGlobalScope)
     private val modelField = JBTextField(defaultModel)
+    private val conservativeRadio = JBRadioButton(
+        "Conservative -- minimal or no changes; only add rules that are clearly proven useful, only remove/change existing rules with clear evidence they aren't helping",
+        !defaultMode.equals("aggressive", ignoreCase = true)
+    )
+    private val aggressiveRadio = JBRadioButton(
+        "Aggressive -- suggests more changes whenever it thinks they'll help, including adding, updating, or removing existing rules",
+        defaultMode.equals("aggressive", ignoreCase = true)
+    )
     private val previewArea = JBTextArea().apply {
         isEditable = false
         lineWrap = true
@@ -43,11 +54,18 @@ internal class LearningOptionsDialog(
         private set
     var model: String? = null
         private set
+    /** "conservative" or "aggressive". */
+    var mode: String = "conservative"
+        private set
 
     init {
         title = "Analyse Copilot Sessions"
         setOKButtonText("Analyse")
         projectCheckBox.isEnabled = hasProject
+        ButtonGroup().apply {
+            add(conservativeRadio)
+            add(aggressiveRadio)
+        }
         init()
         refreshPreview()
     }
@@ -60,6 +78,9 @@ internal class LearningOptionsDialog(
         if (!hasProject) {
             topPanel.add(JBLabel("(Project scope unavailable -- no project is open.)"))
         }
+        topPanel.add(JBLabel("Learning mode:"))
+        topPanel.add(conservativeRadio)
+        topPanel.add(aggressiveRadio)
         topPanel.add(JBLabel("Model (optional, blank = Copilot's default):"))
         topPanel.add(modelField)
         topPanel.add(JBLabel("Examples: claude-sonnet-5, claude-opus-4.8, gpt-5.5, gemini-3.1-pro-preview"))
@@ -123,6 +144,7 @@ internal class LearningOptionsDialog(
         selectProject = projectCheckBox.isSelected
         selectGlobal = globalCheckBox.isSelected
         model = modelField.text.trim().takeIf { it.isNotEmpty() }
+        mode = if (aggressiveRadio.isSelected) "aggressive" else "conservative"
         super.doOKAction()
     }
 }

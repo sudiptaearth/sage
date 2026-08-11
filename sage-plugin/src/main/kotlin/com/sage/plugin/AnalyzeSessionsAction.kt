@@ -129,6 +129,7 @@ class AnalyzeSessionsAction : AnAction() {
                 defaultProjectScope = settings.defaultLearnProjectScope,
                 defaultGlobalScope = settings.defaultLearnGlobalScope,
                 defaultModel = settings.defaultLearningModel,
+                defaultMode = settings.defaultLearningMode,
                 repoRoot = repoRoot
             )
             if (!optionsDialog.showAndGet()) return
@@ -136,13 +137,15 @@ class AnalyzeSessionsAction : AnAction() {
             settings.defaultLearnProjectScope = optionsDialog.selectProject
             settings.defaultLearnGlobalScope = optionsDialog.selectGlobal
             settings.defaultLearningModel = optionsDialog.model ?: ""
+            settings.defaultLearningMode = optionsDialog.mode
 
             runAnalysis(
                 project = project,
                 sessions = selectedSessions,
                 includeProject = optionsDialog.selectProject,
                 includeGlobal = optionsDialog.selectGlobal,
-                model = optionsDialog.model
+                model = optionsDialog.model,
+                mode = optionsDialog.mode
             )
         } catch (e: Exception) {
             LOG.error("AnalyzeSessionsAction: actionPerformed failed", e)
@@ -158,7 +161,8 @@ class AnalyzeSessionsAction : AnAction() {
         sessions: List<SessionInfo>,
         includeProject: Boolean,
         includeGlobal: Boolean,
-        model: String?
+        model: String?,
+        mode: String
     ) {
         object : Task.Backgroundable(project, "Analysing Copilot sessions", true) {
             override fun run(indicator: ProgressIndicator) {
@@ -204,7 +208,7 @@ class AnalyzeSessionsAction : AnAction() {
                     setStage(1) // "Analysing chat for mistakes..."
                     val repoRoot: Path? = project?.basePath?.let { Paths.get(it) }
                     val outcome = invokeLearningAnalyzer(
-                        chatSessions, includeProject, includeGlobal, model, repoRoot
+                        chatSessions, includeProject, includeGlobal, model, mode, repoRoot
                     ) { line ->
                         // Heuristically map the CLI's raw tool-call chatter onto a friendly
                         // stage, instead of showing that chatter verbatim -- never regresses.
@@ -373,6 +377,7 @@ class AnalyzeSessionsAction : AnAction() {
         includeProject: Boolean,
         includeGlobal: Boolean,
         model: String?,
+        mode: String,
         repoRoot: Path?,
         onProgressLine: ((String) -> Unit)? = null
     ): AnalysisOutcome {
@@ -402,11 +407,16 @@ class AnalyzeSessionsAction : AnAction() {
         val settings = ExportSettingsState.getInstance().state
         val renderOptionsInstance = renderOptionsCtor.newInstance(settings.includeThinkingBlocks, settings.includeRawToolJson)
 
+        val modeClass = Class.forName("com.sage.reader.learn.LearningMode")
+        @Suppress("UNCHECKED_CAST")
+        val modeConstants = modeClass.enumConstants as Array<Enum<*>>
+        val modeInstance = modeConstants.first { it.name.equals(mode, ignoreCase = true) }
+
         val requestClass = Class.forName("com.sage.reader.learn.LearningRequest")
         val requestCtor = requestClass.getConstructor(
-            List::class.java, List::class.java, String::class.java, renderOptionsClass
+            List::class.java, List::class.java, String::class.java, renderOptionsClass, modeClass
         )
-        val requestInstance = requestCtor.newInstance(chatSessions, targets, model, renderOptionsInstance)
+        val requestInstance = requestCtor.newInstance(chatSessions, targets, model, renderOptionsInstance, modeInstance)
 
         val analyzerClass = Class.forName("com.sage.reader.learn.LearningAnalyzer")
         val analyzerInstance = analyzerClass.getConstructor().newInstance()

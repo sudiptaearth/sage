@@ -30,11 +30,23 @@ This plugin's core feature analyses past Copilot chat sessions for mistakes and 
 1. Select one or more sessions in the multi-select picker (Ctrl/Shift-click or drag)
 2. In the "Direct the Sage's focus." dialog, choose which instructions file scope(s) to update -- project
    (`.github/copilot-instructions.md`), global
-   (`~/.copilot/instructions/learnings.instructions.md`), or both -- and
+   (`~/.copilot/instructions/learnings.instructions.md`), or both -- pick a
+   **learning mode** (Conservative or Aggressive, see below), and
    optionally a model name
 3. The plugin shells out to the installed `copilot` CLI in the background
    (progress indicator shown); when finished, a notification shows a
    summary of the learnings Copilot added/merged
+
+**Learning modes:**
+- **Conservative** (default) -- suggests the minimum change necessary, or
+  none at all. Only adds a rule if it's clearly useful and tied to a proven
+  mistake in the selected sessions; only removes or changes an existing
+  rule if there's clear evidence it isn't helping or is doing harm.
+  Otherwise leaves the instructions file untouched.
+- **Aggressive** -- suggests more changes (addition, update, or removal)
+  whenever it thinks it will help, even without a one-to-one tie to a
+  specific session mistake. May rewrite or remove existing rules it judges
+  unhelpful or counterproductive.
 
 **Requires the `copilot` CLI to be installed and on `PATH`** (or the
 `SAGE_CLI_PATH` environment variable set to its full path),
@@ -71,8 +83,8 @@ Configure defaults under **Settings → Tools → Sage**:
 - Default export folder
 - Include thinking blocks
 - Include raw tool JSON
-- Default learning target scope(s) and model (remembered from the last
-  "Analyse Copilot Sessions" run)
+- Default learning target scope(s), mode, and model (remembered from the
+  last "Analyse Copilot Sessions" run)
 
 ### Supported Formats
 

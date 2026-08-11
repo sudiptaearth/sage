@@ -25,6 +25,8 @@ class ExportSettingsState : PersistentStateComponent<ExportSettingsState.State> 
         /** Default target scopes for the "analyse sessions" action. */
         var defaultLearnProjectScope: Boolean = true
         var defaultLearnGlobalScope: Boolean = false
+        /** Default learning mode for the "analyse sessions" action: "conservative" or "aggressive". */
+        var defaultLearningMode: String = "conservative"
 
         /**
          * Cache of session file name -> first user prompt, used to label the

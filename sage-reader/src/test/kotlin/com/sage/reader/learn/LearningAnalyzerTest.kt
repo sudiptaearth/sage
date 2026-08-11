@@ -89,6 +89,29 @@ class LearningAnalyzerTest {
     }
 
     @Test
+    fun `buildPrompt includes conservative guidance by default`() {
+        val analyzer = LearningAnalyzer(invoker = CopilotCliInvoker(processRunner = FakeProcessRunner()))
+        val prompt = analyzer.buildPrompt(
+            sessionFiles = listOf(Paths.get("C:/tmp/session-1-a.md")),
+            targets = listOf(Paths.get("C:/repo/.github/copilot-instructions.md"))
+        )
+        assertTrue(prompt.contains("CONSERVATIVE mode"))
+        assertTrue(prompt.contains("prefer making no change over a speculative one"))
+    }
+
+    @Test
+    fun `buildPrompt includes aggressive guidance when requested`() {
+        val analyzer = LearningAnalyzer(invoker = CopilotCliInvoker(processRunner = FakeProcessRunner()))
+        val prompt = analyzer.buildPrompt(
+            sessionFiles = listOf(Paths.get("C:/tmp/session-1-a.md")),
+            targets = listOf(Paths.get("C:/repo/.github/copilot-instructions.md")),
+            mode = LearningMode.AGGRESSIVE
+        )
+        assertTrue(prompt.contains("AGGRESSIVE mode"))
+        assertTrue(prompt.contains("rewrite, tighten, reorganize, or remove"))
+    }
+
+    @Test
     fun `formatTimestamp renders ordinal day, abbreviated month and 12-hour time`() {
         assertEquals(
             "6:40 PM, 8th Aug, 2026",

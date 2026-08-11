@@ -70,7 +70,7 @@ into a Copilot instructions file, so future sessions pick them up
 automatically:
 
 ```bash
-./gradlew run --args="--learn <uuid> [<uuid>...] [--project] [--global] [--model <name>]"
+./gradlew run --args="--learn <uuid> [<uuid>...] [--project] [--global] [--model <name>] [--mode conservative|aggressive]"
 ```
 
 - Pass one or more session UUIDs (CLI or IDE plugin sessions, same
@@ -81,6 +81,17 @@ automatically:
   two must be given; both may be given together.
 - `--model <name>` is passed straight through as `copilot --model <name>`;
   omit it to let Copilot pick its own default.
+- `--mode` selects how aggressively to propose changes (defaults to
+  `conservative` if omitted):
+  - **`conservative`**: suggests the minimum change necessary, or none at
+    all. Only adds a rule if it's clearly useful and tied to a proven
+    mistake in the transcripts; only removes/changes an existing rule if
+    there's clear evidence it isn't helping or is doing harm. Otherwise
+    leaves the instructions file untouched.
+  - **`aggressive`**: suggests more changes -- addition, update, or removal
+    -- whenever it thinks it will help, even without a one-to-one tie to a
+    specific transcript mistake. May rewrite or remove existing rules it
+    judges unhelpful or counterproductive.
 
 Under the hood this shells out to the **installed `copilot` CLI** in its
 non-interactive scripting mode (`copilot -p ... --allow-all-tools

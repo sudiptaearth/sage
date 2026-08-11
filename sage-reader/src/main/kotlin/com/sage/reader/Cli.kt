@@ -3,6 +3,7 @@ package com.sage.reader
 import com.sage.reader.learn.InstructionsFileTargets
 import com.sage.reader.learn.InstructionsScope
 import com.sage.reader.learn.LearningAnalyzer
+import com.sage.reader.learn.LearningMode
 import com.sage.reader.learn.LearningRequest
 import com.sage.reader.model.ChatSession
 import com.sage.reader.model.ContentBlock
@@ -22,7 +23,7 @@ import java.nio.file.Paths
  *   ./gradlew run --args="<session-uuid>"                     # auto-detect & render (CLI or IDE session)
  *   ./gradlew run --args="C:\path\to\some.db"                 # summarize one specific IDE plugin .db file
  *   ./gradlew run --args="--render C:\path\to\some.db"        # print full Markdown for every session in that IDE plugin .db file
- *   ./gradlew run --args="--learn <uuid> [<uuid>...] [--project] [--global] [--model <name>]"
+ *   ./gradlew run --args="--learn <uuid> [<uuid>...] [--project] [--global] [--model <name>] [--mode conservative|aggressive]"
  *                                                              # analyse selected sessions and update learnings (see [learnMode])
  */
 fun main(args: Array<String>) {
@@ -72,7 +73,7 @@ private fun findSessionById(sessionId: String): ChatSession? {
 }
 
 /**
- * `--learn <uuid> [<uuid>...] [--project] [--global] [--model <name>]`
+ * `--learn <uuid> [<uuid>...] [--project] [--global] [--model <name>] [--mode conservative|aggressive]`
  *
  * Looks up each given session UUID (CLI or IDE plugin), then hands them to
  * [LearningAnalyzer], which renders them to Markdown and delegates the
@@ -83,12 +84,18 @@ private fun findSessionById(sessionId: String): ChatSession? {
  * (repo root = current working directory); `--global` targets
  * `~/.copilot/instructions/learnings.instructions.md`. At least one of
  * `--project`/`--global` must be given; both may be given together.
+ *
+ * `--mode` selects how aggressively to propose changes -- `conservative`
+ * (default; minimal/no changes unless clearly proven useful) or
+ * `aggressive` (freely add, update, or remove rules whenever it thinks it
+ * will help). See [LearningMode].
  */
 private fun learnMode(rest: List<String>) {
     val sessionIds = mutableListOf<String>()
     var wantProject = false
     var wantGlobal = false
     var model: String? = null
+    var mode = LearningMode.CONSERVATIVE
 
     var i = 0
     while (i < rest.size) {
@@ -98,10 +105,25 @@ private fun learnMode(rest: List<String>) {
             "--model" -> {
                 i++
                 if (i >= rest.size) {
-                    System.err.println("Usage: --learn <uuid...> [--project] [--global] [--model <name>]")
+                    System.err.println("Usage: --learn <uuid...> [--project] [--global] [--model <name>] [--mode conservative|aggressive]")
                     return
                 }
                 model = rest[i]
+            }
+            "--mode" -> {
+                i++
+                if (i >= rest.size) {
+                    System.err.println("Usage: --learn <uuid...> [--project] [--global] [--model <name>] [--mode conservative|aggressive]")
+                    return
+                }
+                mode = when (rest[i].lowercase()) {
+                    "conservative" -> LearningMode.CONSERVATIVE
+                    "aggressive" -> LearningMode.AGGRESSIVE
+                    else -> {
+                        System.err.println("Unknown --mode value '${rest[i]}'. Expected 'conservative' or 'aggressive'.")
+                        return
+                    }
+                }
             }
             else -> sessionIds += arg
         }
@@ -109,7 +131,7 @@ private fun learnMode(rest: List<String>) {
     }
 
     if (sessionIds.isEmpty()) {
-        System.err.println("Usage: --learn <uuid> [<uuid>...] [--project] [--global] [--model <name>]")
+        System.err.println("Usage: --learn <uuid> [<uuid>...] [--project] [--global] [--model <name>] [--mode conservative|aggressive]")
         return
     }
     if (!wantProject && !wantGlobal) {
@@ -137,13 +159,13 @@ private fun learnMode(rest: List<String>) {
     }
     val targets = InstructionsFileTargets.resolve(scopes, repoRoot = Paths.get("").toAbsolutePath())
 
-    println("Analysing ${sessions.size} session(s), updating ${targets.size} target file(s):")
+    println("Analysing ${sessions.size} session(s) in ${mode.name.lowercase()} mode, updating ${targets.size} target file(s):")
     targets.forEach { println("  - $it") }
     println()
 
     try {
         val result = LearningAnalyzer().analyze(
-            LearningRequest(sessions = sessions, targets = targets, model = model)
+            LearningRequest(sessions = sessions, targets = targets, model = model, mode = mode)
         )
         println(result.cliOutput)
         println()

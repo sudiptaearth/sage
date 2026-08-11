@@ -16,7 +16,9 @@ data class LearningRequest @JvmOverloads constructor(
     val targets: List<Path>,
     /** Passed straight through as `--model`; null lets Copilot pick its own default. */
     val model: String? = null,
-    val renderOptions: RenderOptions = RenderOptions.DEFAULT
+    val renderOptions: RenderOptions = RenderOptions.DEFAULT,
+    /** How aggressively to propose changes to the target instructions file(s). */
+    val mode: LearningMode = LearningMode.CONSERVATIVE
 )
 
 /**
@@ -85,7 +87,7 @@ class LearningAnalyzer @JvmOverloads constructor(
             }
             val timestamp = formatTimestamp(clock())
             val instructionsFile = writeInstructionsPromptFile(
-                tempDir, sessionFiles, request.targets, proposedFiles, timestamp
+                tempDir, sessionFiles, request.targets, proposedFiles, timestamp, request.mode
             )
             val prompt = "Read and fully follow the non-interactive task instructions in the file " +
                 "'$instructionsFile', including reading and writing whatever other files it references. " +
@@ -142,10 +144,11 @@ class LearningAnalyzer @JvmOverloads constructor(
         sessionFiles: List<Path>,
         targets: List<Path>,
         proposedFiles: List<Path>,
-        timestamp: String
+        timestamp: String,
+        mode: LearningMode
     ): Path {
         val path = tempDir.resolve("task-instructions.md")
-        Files.writeString(path, buildPrompt(sessionFiles, targets, proposedFiles, timestamp))
+        Files.writeString(path, buildPrompt(sessionFiles, targets, proposedFiles, timestamp, mode))
         return path
     }
 
@@ -168,11 +171,31 @@ class LearningAnalyzer @JvmOverloads constructor(
         sessionFiles: List<Path>,
         targets: List<Path>,
         proposedFiles: List<Path> = targets,
-        timestamp: String = ""
+        timestamp: String = "",
+        mode: LearningMode = LearningMode.CONSERVATIVE
     ): String {
         val sessionList = sessionFiles.joinToString("\n") { "- $it" }
         val targetPairs = targets.zip(proposedFiles).joinToString("\n") { (target, proposed) ->
             "- target: $target\n  write proposed result to: $proposed"
+        }
+        val modeGuidance = when (mode) {
+            LearningMode.CONSERVATIVE -> """
+                |You are in CONSERVATIVE mode: suggest the minimum change necessary, or no
+                |change at all. Only add a new rule if it is clearly useful and tied to a
+                |concrete, proven mistake actually visible in the transcripts above -- skip
+                |anything speculative or marginal. Only remove or modify an existing rule if
+                |there is clear evidence from these transcripts that it isn't helping or is
+                |actively causing harm; otherwise leave existing rules exactly as they are.
+                |When in doubt, prefer making no change over a speculative one.
+            """.trimMargin()
+            LearningMode.AGGRESSIVE -> """
+                |You are in AGGRESSIVE mode: propose any addition, update, or removal you
+                |believe would improve the instructions, even if the connection to a specific
+                |transcript is more general rather than tied to one exact mistake. Feel free to
+                |rewrite, tighten, reorganize, or remove existing rules you judge to be
+                |unhelpful, redundant, or actively counterproductive, not only ones directly
+                |implicated by a mistake in these specific transcripts.
+            """.trimMargin()
         }
         return """
             |You are analysing past Copilot chat session transcripts to learn from mistakes
@@ -190,15 +213,26 @@ class LearningAnalyzer @JvmOverloads constructor(
             |   prevent a similar mistake in a future, unrelated session. Skip anything that's
             |   too specific to that one session to generalize usefully.
             |
+            |$modeGuidance
+            |
             |Then, for EACH of the following target/proposed-output path pair(s):
             |$targetPairs
             |
             |- If the "target" file already exists, read its current full content first.
-            |- Merge the new rules you derived into it: avoid duplicating rules that already
-            |  exist (in meaning, not just exact wording), keep the file's existing format and
-            |  any existing frontmatter/sections, and produce a single well-organized,
+            |- Merge the new rules you derived into it (following the mode guidance above for
+            |  how much to add, change, or remove): avoid duplicating rules that already exist
+            |  (in meaning, not just exact wording), keep the file's existing format and any
+            |  existing frontmatter/sections, and produce a single well-organized,
             |  de-duplicated final version -- not a blind append and not a wholesale rewrite of
             |  unrelated existing content.
+                        |- Before finalizing, check whether any rule (existing or newly proposed) directly
+                        |  contradicts another rule in the merged file. If a contradiction is found, resolve
+                        |  it by looking back at the session transcripts above for concrete evidence of which
+                        |  behavior the user actually preferred or corrected the assistant toward in practice;
+                        |  keep (or rewrite) the rule that matches that evidence, and remove or narrow the
+                        |  contradicting one so it no longer conflicts. If the transcripts do not clearly
+                        |  support either side, prefer the more specific/narrowly-scoped rule over the more
+                        |  general one, and briefly note the resolved conflict in your final summary.
             |- If the "target" file does not exist yet, start a brand-new file's content from
             |  scratch. If its path lives under a directory literally named "instructions" (i.e.
             |  it is a `~/.copilot/instructions/*.instructions.md` global file), start it with
@@ -232,7 +266,8 @@ class LearningAnalyzer @JvmOverloads constructor(
             |Work through this fully non-interactively: make reasonable judgment calls
             |yourself instead of asking clarifying questions, and do not stop until every
             |proposed-output path listed above has been written. When finished, print a
-            |short bullet-point summary of the new or changed rules for each target file.
+            |short bullet-point summary of the new, changed, or removed rules for each target
+            |file.
         """.trimMargin()
     }
 
