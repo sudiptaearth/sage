@@ -1,0 +1,30 @@
+<idea-plugin>
+    <id>com.sage.plugin</id>
+    <name>Sage</name>
+    <vendor email="support@example.com" url="https://github.com">Sage</vendor>
+    <description>Export GitHub Copilot chat sessions to Markdown format</description>
+    <version>0.1.0</version>
+    <idea-version since-build="242.0" until-build="999.*"/>
+    
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.sage.plugin.ExportSettingsState"/>
+        <applicationConfigurable
+                instance="com.sage.plugin.ExportSettingsConfigurable"
+                displayName="Sage"
+                id="com.sage.settings"/>
+        <notificationGroup id="Sage" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action
+                id="com.sage.CopilotChatAction"
+                class="com.sage.plugin.CopilotChatAction"
+                text="Summon Sage"
+                description="Export a Copilot chat session to Markdown, or analyse sessions for mistakes and update instructions files">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

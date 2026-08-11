@@ -1,4 +1,4 @@
-rootProject.name = "copilot-chat-exporter"
+rootProject.name = "sage"
 
-include(":copilot-chat-reader")
-include(":copilot-chat-exporter-plugin")
+include(":sage-reader")
+include(":sage-plugin")
