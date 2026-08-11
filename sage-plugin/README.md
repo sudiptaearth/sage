@@ -1,35 +1,29 @@
 # Sage Plugin
 
-IntelliJ IDE plugin for exporting GitHub Copilot chat sessions to Markdown.
+IntelliJ IDE plugin for analysing GitHub Copilot chat sessions and turning them into lasting instructions, with Markdown export also available.
 
 ## Overview
 
-This plugin provides a single-click export for both:
+This plugin's core feature analyses past Copilot chat sessions for mistakes and merges the lessons into your project's and/or global Copilot instructions file, so future sessions avoid repeating them. It also provides a single-click Markdown export for both:
 - **IDE Plugin Sessions**: Chat sessions from the Copilot panel in JetBrains IDEs
 - **CLI Sessions**: Chat sessions from the GitHub Copilot CLI (`copilot-cli`)
 
 ## Features
 
+✅ **Session Learning**: Multi-select sessions, analyse them with the `copilot` CLI for mistakes, and merge the lessons into a project and/or global instructions file  
 ✅ **Unified Export**: Single command works for both session types  
 ✅ **Rich Content**: Exports thinking blocks, tool calls, and results  
 ✅ **Auto-Detection**: Automatically discovers available sessions  
 ✅ **Session Picker**: Searchable, sortable dialog to choose from multiple sessions  
 ✅ **File Explorer Integration**: "Reveal in Explorer" button after export  
-✅ **Configurable Settings**: Default export folder and content toggles (thinking blocks / raw tool JSON)  
-✅ **Session Learning**: Multi-select sessions, analyse them with the `copilot` CLI for mistakes, and merge the lessons into a project and/or global instructions file
+✅ **Configurable Settings**: Default export folder and content toggles (thinking blocks / raw tool JSON)
 
 ## Usage
 
 ### From IDE
 
 1. Open **Tools → Summon Sage**
-2. Choose **"Preserve the Holy Texts"** (export) or **"Seek Enlightenment"** (analyse & update learnings), or **"Dismiss"** to cancel
-
-### Exporting a session ("Preserve the Holy Texts")
-
-1. If multiple sessions exist, select one from the picker
-2. Choose save location (suggested name: `copilot-chat-<session-title>-<timestamp>.md`)
-3. Click "Reveal in Explorer" to open the exported file
+2. Choose **"Seek Enlightenment"** (analyse & update learnings) or **"Preserve the Holy Texts"** (export), or **"Dismiss"** to cancel
 
 ### Analysing sessions and updating learnings ("Seek Enlightenment")
 
@@ -49,6 +43,12 @@ reasoning per invocation, so expect it to take anywhere from several
 seconds to under a minute depending on how many/how large the selected
 sessions are.
 
+### Exporting a session ("Preserve the Holy Texts")
+
+1. If multiple sessions exist, select one from the picker
+2. Choose save location (suggested name: `copilot-chat-<session-title>-<timestamp>.md`)
+3. Click "Reveal in Explorer" to open the exported file
+
 ## Requirements
 
 - **An active GitHub Copilot subscription** (individual, business, or
@@ -57,9 +57,9 @@ sessions are.
   only reads chat data already saved locally -- but the "Seek Enlightenment"
   (analyse & update learnings) feature does invoke the `copilot` CLI, which
   requires a licensed, signed-in session to run.
-- At least one prior Copilot chat session (IDE plugin or CLI) to export.
 - For "Seek Enlightenment": the `copilot` CLI installed and on `PATH` (or
   `SAGE_CLI_PATH` set to its full path).
+- At least one prior Copilot chat session (IDE plugin or CLI) to export.
 - IntelliJ Platform 2024.2+ (Build 242+), JDK 11+ if building from source.
 - The GitHub Copilot IDE plugin is optional -- only needed if you want to
   export/analyse IDE-panel sessions rather than CLI-only sessions.

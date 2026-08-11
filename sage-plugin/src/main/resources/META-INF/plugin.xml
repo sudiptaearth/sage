@@ -2,7 +2,7 @@
     <id>com.sage.plugin</id>
     <name>Sage</name>
     <vendor email="support@example.com" url="https://github.com">Sage</vendor>
-    <description>Export GitHub Copilot chat sessions to Markdown format</description>
+    <description>Analyse GitHub Copilot chat sessions for mistakes and update instructions files; also export sessions to Markdown format</description>
     <version>0.1.0</version>
     <idea-version since-build="242.0" until-build="999.*"/>
     
@@ -23,7 +23,7 @@
                 id="com.sage.CopilotChatAction"
                 class="com.sage.plugin.CopilotChatAction"
                 text="Summon Sage"
-                description="Export a Copilot chat session to Markdown, or analyse sessions for mistakes and update instructions files">
+                description="Analyse Copilot chat sessions for mistakes and update instructions files, or export a session to Markdown">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>

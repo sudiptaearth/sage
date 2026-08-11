@@ -1,11 +1,12 @@
 # Sage Reader
 
 A plain Kotlin module -- no IntelliJ Platform dependency -- that reads GitHub
-Copilot chat data straight off disk, maps it into a small domain model
-(`ChatSession` / `Turn` / `TurnSide` / `ContentBlock`), and renders it to
-Markdown. It stands alone and is testable without a running IDE; the
-`sage-plugin` module wraps it in an actual IntelliJ plugin
-action.
+Copilot chat data straight off disk and analyses sessions for mistakes,
+merging the lessons into a Copilot instructions file (`--learn`) so future
+sessions learn from the past. It also maps sessions into a small domain model
+(`ChatSession` / `Turn` / `TurnSide` / `ContentBlock`) and renders them to
+Markdown for export. It stands alone and is testable without a running IDE;
+the `sage-plugin` module wraps it in an actual IntelliJ plugin action.
 
 This module stands alone and is testable without a running IDE.
 
@@ -62,27 +63,7 @@ This module stands alone and is testable without a running IDE.
      the fastest way to eyeball real output before wiring it into a plugin
      action and a save dialog.
 
-### Unified Session Export
-
-The reader supports both IDE plugin sessions and Copilot CLI sessions
-(from `~/.copilot/session-state/`):
-
-- **IDE Plugin Sessions**: Stored in `%LOCALAPPDATA%\github-copilot\{IDE}\chat-*\{STORE_ID}\` as Nitrite `.db` files
-- **CLI Sessions**: Stored in `~/.copilot/session-state\{SESSION_UUID}\` as JSONL + YAML
-
-Simply pass the session UUID to export either type:
-```bash
-./gradlew run --args="e7563911-05f2-4459-aac1-feb460c882f8"
-```
-
-The tool will:
-1. Check if it's a CLI session in `~/.copilot/session-state/`
-2. If not found, search IDE plugin `.db` files across all stores
-3. Render the matching session to Markdown
-
-This eliminates the need to know where a session is stored -- just provide the UUID.
-
-## Learning from mistakes: `--learn`
+### Learning from mistakes: `--learn`
 
 `--learn` analyses one or more sessions for mistakes and merges the lessons
 into a Copilot instructions file, so future sessions pick them up
@@ -121,6 +102,26 @@ prompts don't reliably survive `cmd.exe`'s argument quoting when invoked via
 `ProcessBuilder`, so `LearningAnalyzer` writes its full instructions to a
 temp file and passes only a short one-line `-p` argument telling Copilot to
 read and follow that file -- worth knowing if you extend this further.
+
+### Unified Session Export
+
+The reader supports both IDE plugin sessions and Copilot CLI sessions
+(from `~/.copilot/session-state/`):
+
+- **IDE Plugin Sessions**: Stored in `%LOCALAPPDATA%\github-copilot\{IDE}\chat-*\{STORE_ID}\` as Nitrite `.db` files
+- **CLI Sessions**: Stored in `~/.copilot/session-state\{SESSION_UUID}\` as JSONL + YAML
+
+Simply pass the session UUID to export either type:
+```bash
+./gradlew run --args="e7563911-05f2-4459-aac1-feb460c882f8"
+```
+
+The tool will:
+1. Check if it's a CLI session in `~/.copilot/session-state/`
+2. If not found, search IDE plugin `.db` files across all stores
+3. Render the matching session to Markdown
+
+This eliminates the need to know where a session is stored -- just provide the UUID.
 
 ## Locked databases
 
