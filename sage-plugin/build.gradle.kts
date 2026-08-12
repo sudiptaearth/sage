@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.sage"
-version = "0.1.2"
+version = "0.1.3"
 
 // IntelliJ Platform Plugin configuration
 intellij {
