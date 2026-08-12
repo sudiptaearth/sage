@@ -9,7 +9,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
- * Settings → Tools → Sage: default export folder + content
+ * Settings → Sage: default export folder + content
  * toggles, so users don't have to re-pick a folder and re-decide on
  * verbosity every single export.
  */

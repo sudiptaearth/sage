@@ -2,8 +2,15 @@
     <id>com.sage.plugin</id>
     <name>Sage for Copilot Chat</name>
     <vendor email="sudipta.earth@gmail.com" url="https://github.com/sudiptaearth/sage">Sage</vendor>
-    <description>Analyse GitHub Copilot chat sessions for mistakes and update instructions files; also export sessions to Markdown format</description>
-    <version>0.1.1</version>
+    <description><![CDATA[
+    <p>Sage analyses your GitHub Copilot chat sessions (from both the IDE Copilot panel and the <code>copilot</code> CLI) to find mistakes and turn them into lasting project or global Copilot instructions, so future sessions stop repeating them.</p>
+    <ul>
+      <li><b>Seek Enlightenment</b> &mdash; multi-select one or more chat sessions, analyse them with the installed <code>copilot</code> CLI, and merge the resulting lessons into <code>.github/copilot-instructions.md</code>, <code>~/.copilot/instructions/learnings.instructions.md</code>, or both. Choose between Conservative (minimal, evidence-backed edits) and Aggressive (broader rewrites/removals) learning modes, and optionally pick a model.</li>
+      <li><b>Preserve the Holy Texts</b> &mdash; export any IDE or CLI chat session to a readable Markdown file, including thinking blocks and tool calls, with a searchable session picker and a "Reveal in Explorer" shortcut.</li>
+    </ul>
+    <p>Configurable via <b>Settings &rarr; Sage</b> (default export folder, content toggles). Learning scope, mode, and model are chosen in the "Analyse Copilot Sessions" dialog and remembered as defaults for next time. Requires the <code>copilot</code> CLI on <code>PATH</code> (or <code>SAGE_CLI_PATH</code>) and an active GitHub Copilot subscription for the learning feature.</p>
+    ]]></description>
+    <version>0.1.2</version>
     <idea-version since-build="242.0"/>
     
     <depends>com.intellij.modules.platform</depends>

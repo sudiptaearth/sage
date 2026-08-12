@@ -79,12 +79,14 @@ sessions are.
 
 ### Settings
 
-Configure defaults under **Settings → Tools → Sage**:
+Configure defaults under **Settings → Sage**:
 - Default export folder
 - Include thinking blocks
 - Include raw tool JSON
-- Default learning target scope(s), mode, and model (remembered from the
-  last "Analyse Copilot Sessions" run)
+
+Learning target scope(s), mode, and model are chosen each time in the
+"Analyse Copilot Sessions" dialog, and your last selections are
+remembered as defaults for next time (not editable from the Settings page).
 
 ### Supported Formats
 
