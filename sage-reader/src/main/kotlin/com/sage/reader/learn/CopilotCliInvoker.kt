@@ -99,17 +99,73 @@ class CopilotCliInvoker @JvmOverloads constructor(
 
     companion object {
         /**
+         * Common install locations for the `copilot` CLI on Unix-like
+         * systems, checked only as a last-resort fallback if resolving via
+         * a login shell (see [resolveViaLoginShell]) also fails (e.g. no
+         * shell available). Covers the most common installs: Homebrew on
+         * Apple Silicon/Intel Macs, and typical npm global-prefix locations.
+         */
+        private val UNIX_FALLBACK_PATHS = listOf(
+            "/opt/homebrew/bin/copilot",
+            "/usr/local/bin/copilot",
+            System.getProperty("user.home") + "/.npm-global/bin/copilot",
+            System.getProperty("user.home") + "/.local/bin/copilot"
+        )
+
+        /**
          * Resolves the `copilot` executable to invoke: an explicit override
-         * via the `SAGE_CLI_PATH` environment variable takes
-         * priority, otherwise assume it's on `PATH` (`copilot` on Unix-like
-         * systems, `copilot.cmd` on Windows, matching how npm installs its
-         * CLI shims).
+         * via the `SAGE_CLI_PATH` environment variable takes priority.
+         * Otherwise, on Unix-like systems, asks the user's actual login
+         * shell to resolve it via `command -v copilot` (see
+         * [resolveViaLoginShell]), since GUI apps (including IntelliJ,
+         * launched via Launch Services/Finder/Dock rather than a login
+         * shell) do NOT inherit the shell's `PATH` or exported env vars --
+         * a `copilot` install that works fine from Terminal can otherwise be
+         * invisible to the IDE process. If the shell probe is unavailable
+         * or fails, a short list of well-known install locations is checked
+         * (see [UNIX_FALLBACK_PATHS]) before finally falling back to the
+         * bare command name (`copilot` on Unix-like systems, `copilot.cmd`
+         * on Windows, matching how npm installs its CLI shims) and relying
+         * on this process's own `PATH` resolution.
          */
         fun defaultExecutablePath(): String {
             val override = System.getenv("SAGE_CLI_PATH")
             if (!override.isNullOrBlank()) return override
             val isWindows = System.getProperty("os.name")?.lowercase()?.contains("win") == true
+            if (!isWindows) {
+                resolveViaLoginShell()?.let { return it }
+                val found = UNIX_FALLBACK_PATHS.firstOrNull { java.io.File(it).canExecute() }
+                if (found != null) return found
+            }
             return if (isWindows) "copilot.cmd" else "copilot"
+        }
+
+        /**
+         * Runs the user's login shell (from the `$SHELL` env var, defaulting
+         * to `/bin/zsh`, macOS's default since Catalina) in `-l` (login)
+         * mode to source the user's actual shell profile (`.zprofile`,
+         * `.zshrc`, `.bash_profile`, etc.) and resolve `copilot` the same
+         * way Terminal would, via `command -v copilot`. Returns the
+         * resolved absolute path, or null if the shell isn't available, the
+         * probe times out, or `copilot` isn't found this way.
+         */
+        private fun resolveViaLoginShell(): String? {
+            return try {
+                val shell = System.getenv("SHELL")?.takeIf { it.isNotBlank() } ?: "/bin/zsh"
+                val process = ProcessBuilder(shell, "-lc", "command -v copilot")
+                    .redirectErrorStream(true)
+                    .start()
+                val finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS)
+                if (!finished) {
+                    process.destroyForcibly()
+                    return null
+                }
+                if (process.exitValue() != 0) return null
+                val resolved = process.inputStream.bufferedReader().readText().trim()
+                resolved.takeIf { it.isNotEmpty() && java.io.File(it).canExecute() }
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 }
