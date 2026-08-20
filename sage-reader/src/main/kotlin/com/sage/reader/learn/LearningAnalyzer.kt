@@ -92,6 +92,10 @@ class LearningAnalyzer @JvmOverloads constructor(
             val prompt = "Read and fully follow the non-interactive task instructions in the file " +
                 "'$instructionsFile', including reading and writing whatever other files it references. " +
                 "Do not ask clarifying questions -- carry out every step yourself."
+            // `copilot --add-dir` requires the directory to already exist (it errors out
+            // otherwise), but a target's parent (e.g. a project's not-yet-created
+            // `.github/`) may not exist yet on disk -- create it first so it can be added.
+            request.targets.mapNotNull { it.parent }.distinct().forEach { Files.createDirectories(it) }
             val addDirs = (sessionFiles.map { it.parent } + request.targets.mapNotNull { it.parent } + listOf(tempDir))
                 .distinct()
 
